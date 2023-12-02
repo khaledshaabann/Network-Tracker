@@ -1,6 +1,5 @@
 import pygeoip
 import pyshark
-from dpkt.utils import mac_to_str
 import urllib.request
 
 
@@ -8,7 +7,7 @@ import urllib.request
 gi = pygeoip.GeoIP('GeoLiteCity.dat')
 
 #This function returns the kml file body.
-def retKML(dstip, srcip, pkt_type, number_s, number_r, srcport, dstport):
+def KML(dstip, srcip, pkt_type, number_s, number_r, srcport, dstport):
     dst = gi.record_by_name(dstip)
     src = gi.record_by_name(srcip)
     # Here we extract the longitude and latitude of our IP addresses (source and destination) and insert them into the kml output which is returned.
@@ -46,8 +45,8 @@ def not_in(prev_dst, dst):
     return True
 
 #This function finds the co-ordinates, and other properties of the packet such as protocol, ports etc.
-def plotIPs(capture):
-    pts = ''
+def pkt_info(capture):
+    coordinates = ''
     prev_dst = []
     src = urllib.request.urlopen('https://ident.me').read().decode('utf8')
     for pkt in capture:
@@ -73,13 +72,13 @@ def plotIPs(capture):
                     if pkt.ip.src == dst:
                         number_r = number_r + 1
 
-                kml = retKML(dst,src, pkt_type, number_s, number_r, srcport, dstport)
+                kml = KML(dst,src, pkt_type, number_s, number_r, srcport, dstport)
                 prev_dst.append(dst)
             # Co-ordinates are then added to the pts variable and returned.
-                pts = pts + kml
+                coordinates = coordinates + kml
         except:
             pass
-    return pts
+    return coordinates
 
 def main():
     #Liive Capture of 450 packets
@@ -96,7 +95,7 @@ def main():
     '</Style>'
     kmlfooter = '</Document>\n'\
     '</kml>\n'
-    kmldoc=kmlheader+plotIPs(capture)+kmlfooter
+    kmldoc=kmlheader+pkt_info(capture)+kmlfooter
     
     # Creates the kml file itself.
     file = open('KML_Samples.kml', 'w')
